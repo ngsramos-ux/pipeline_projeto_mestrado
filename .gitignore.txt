@@ -5,4 +5,4 @@ __pycache__/
 
 # (OPCIONAL) Se o seu arquivo CSV bruto tiver mais de 100MB, 
 # tire o "#" da linha abaixo para o Git ignorá-lo e não travar o envio:
-# arquivos_tabulares/Exportação_completa_mestrado.csv
+arquivos_tabulares/Exportação_completa_mestrado.csv
