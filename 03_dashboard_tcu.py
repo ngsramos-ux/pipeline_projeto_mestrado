@@ -159,72 +159,62 @@ if orgao_selecionado:
             st.error("A pasta 'graficos_shap_risco' não foi encontrada.")
 
 
-    # --- ABA 3: DISTRIBUIÇÕES INDIVIDUAIS DAS FEATURES---
+    # --- ABA 3: DISTRIBUIÇÕES (Análise Individual de Variáveis) ---
     with aba3:
         st.markdown("### Evidências de Afastamento da Normalidade")
         
-        st.write("Análise isolada das variáveis que apresentaram comportamento atípico, **ordenadas da maior para a menor influência no risco (conforme Gráfico SHAP)**. A linha tracejada representa a mediana da rede federal, enquanto a linha vermelha aponta o fato registrado na entidade analisada.")
+        st.write(
+            "Análise isolada das variáveis que apresentaram comportamento atípico, "
+            "**ordenadas da maior para a menor influência no risco (conforme Gráfico SHAP)**. "
+            "A linha tracejada representa a mediana da rede federal, enquanto a linha vermelha aponta o fato registrado na entidade analisada."
+        )
         
         pasta_dist = "graficos_distribuicao"
         try:
-            arquivos_dist = [f for f in os.listdir(pasta_dist) if f.startswith(f"Dist_{cod_orgao}_")]
-            arquivos_dist.sort()
+            # Captura todos os arquivos gerados para esta UG no Script 02
+            todos_arquivos = [f for f in os.listdir(pasta_dist) if f.startswith(f"Dist_{cod_orgao}_")]
+            todos_arquivos.sort()
             
-            # NOVO: O "Olheiro" - Verifica se o gráfico da F5 foi acionado para essa entidade
-            tem_f5 = any("F5" in arquivo for arquivo in arquivos_dist)
+            # SEPARAÇÃO DE LÓGICA:
+            # 1. Imagens regulares (o ranking SHAP)
+            arquivos_regulares = [f for f in todos_arquivos if "EXTRA_F7" not in f]
+            # 2. A imagem extra da F7 (se existir)
+            arquivo_f7_extra = [f for f in todos_arquivos if "EXTRA_F7" in f]
             
-            if arquivos_dist:
+            # Verifica se a F5 faz parte das anomalias detectadas
+            f5_detectada = any("F5_Var_Pag_Repasse" in f for f in arquivos_regulares)
+            
+            if arquivos_regulares:
+                # Exibição padrão em duas colunas para as variáveis do ranking
                 col_esq, col_dir = st.columns(2)
                 
-                for index, arquivo in enumerate(arquivos_dist):
+                for index, arquivo in enumerate(arquivos_regulares):
                     caminho_dist = os.path.join(pasta_dist, arquivo)
                     if index % 2 == 0:
                         col_esq.image(caminho_dist, use_container_width=True)
                     else:
                         col_dir.image(caminho_dist, use_container_width=True)
                 
-                # ==============================================================================
-                # NOVO: GERAÇÃO DINÂMICA DO GRÁFICO DA F7 (SE A F5 ESTIVER PRESENTE)
-                # ==============================================================================
-                if tem_f5:
-                    st.markdown("---")
-                    st.markdown("#### 🚨 Análise Material Complementar (F7_Qtd_Deficit_Fin)")
-                    st.info("Como a variável **F5** apresentou comportamento anômalo, o painel resgatou automaticamente a distribuição da **F7** (ocultada no modelo original por colinearidade) para compor a evidência material.")
+                # SEÇÃO FINAL: Gatilho da F7 (Apenas se F5 existir e F7 foi gerada)
+                if f5_detectada and arquivo_f7_extra:
+                    st.divider()
+                    st.markdown("#### 🚨 Evidência Material Complementar (F7)")
+                    st.info(
+                        "Como a variável **F5 (Variação de Pagamento de Repasse)** foi identificada como fator de risco, "
+                        "o painel exibe abaixo a distribuição da **F7 (Qtd Déficit Financeiro)**. "
+                        "Embora suprimida do modelo matemático para evitar colinearidade, a F7 é apresentada aqui "
+                        "para fundamentar a materialidade do déficit financeiro nesta unidade."
+                    )
                     
-                    # Verifica se a F7 existe na base que carregamos no passo anterior
-                    if 'F7_Qtd_Deficit_Fin' in df_completo.columns:
-                        import matplotlib.pyplot as plt
-                        import seaborn as sns
-                        
-                        valor_entidade_f7 = dados_orgao.get('F7_Qtd_Deficit_Fin', 0)
-                        mediana_rede_f7 = df_completo['F7_Qtd_Deficit_Fin'].median()
-                        
-                        # Exibe os valores exatos em formato de painel
-                        col_f7_1, col_f7_2 = st.columns(2)
-                        col_f7_1.metric("F7 - Valor desta Unidade", f"{valor_entidade_f7:.2f}")
-                        col_f7_2.metric("F7 - Mediana da Rede Federal", f"{mediana_rede_f7:.2f}")
-                        
-                        # Desenha o Gráfico ao vivo (estilo similar ao do Script 02)
-                        fig, ax = plt.subplots(figsize=(10, 3))
-                        sns.histplot(df_completo['F7_Qtd_Deficit_Fin'], bins=15, color='lightgray', ax=ax, kde=False)
-                        ax.axvline(valor_entidade_f7, color='red', linestyle='-', linewidth=3, label=f'Esta Unidade ({cod_orgao})')
-                        ax.axvline(mediana_rede_f7, color='blue', linestyle='--', linewidth=2, label='Mediana da Rede')
-                        
-                        ax.set_title("Distribuição da F7 na Rede Federal", fontsize=10)
-                        ax.set_xlabel("Valores da F7")
-                        ax.set_ylabel("Quantidade de Entidades")
-                        ax.legend()
-                        
-                        # Renderiza o gráfico no Streamlit
-                        st.pyplot(fig)
-                    else:
-                        st.warning("A coluna F7_Qtd_Deficit_Fin não foi encontrada na base de dados bruta.")
-
+                    caminho_f7 = os.path.join(pasta_dist, arquivo_f7_extra[0])
+                    st.image(caminho_f7, use_container_width=True)
+                    
             else:
                 st.info("Nenhum gráfico de distribuição específico encontrado para esta entidade.")
+                
         except FileNotFoundError:
             st.error("A pasta 'graficos_distribuicao' não foi encontrada.")
-
+            
     # --- ABA 4: DICIONÁRIO DE RED FLAGS ---
     with aba4:
         st.markdown("### Dicionário de Indicadores (Features)")
