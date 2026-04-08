@@ -177,7 +177,7 @@ if orgao_selecionado:
         # ==============================================================================
         # FILTRO DE RELEVÂNCIA (TOGGLE)
         # ==============================================================================
-        filtro_relevancia = st.toggle("🎯 Filtrar apenas riscos relevantes (SHAP > 0.05)", value=False)
+        filtro_relevancia = st.toggle("🎯 Filtrar apenas riscos relevantes (SHAP > 0.05)", value=True)
         
         pasta_dist = "graficos_distribuicao"
         try:
@@ -215,8 +215,8 @@ if orgao_selecionado:
                 # Seção da F7 (Sempre respeitando se a F5 está visível)
                 if f5_detectada and arquivo_f7_extra:
                     st.divider()
-                    st.markdown("#### 🚨 Evidência Material Complementar (F7)")
-                    st.info("Detalhamento da variável F7 ativado pelo gatilho de risco na F5.")
+                    st.markdown("#### 🚨 Red Flag Complementar (F7 - Quantidade de Meses com Déficit Financeiro Operacional)")
+                    st.info("A variável F7 tem alta colinearidade com a variável F5 e por isso não foi usada na modelagem. Apesar disso, é uma importante Red Flag e, como F5 possui risco, F7 também deve ser analisada.")
                     
                     col_f7_img, _ = st.columns(2)
                     caminho_f7 = os.path.join(pasta_dist, arquivo_f7_extra[0])
@@ -226,7 +226,7 @@ if orgao_selecionado:
                 
         except FileNotFoundError:
             st.error("A pasta 'graficos_distribuicao' não foi encontrada.")
-            
+
     # --- ABA 4: DICIONÁRIO DE RED FLAGS ---
     with aba4:
         st.markdown("### Dicionário de Indicadores (Features)")
