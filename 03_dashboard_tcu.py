@@ -31,7 +31,7 @@ def carregar_dados():
     df_bruta = pd.read_csv('arquivos_tabulares/df_features_consolidadas.csv', sep=';', decimal=',')
     
     # 3. O Pulo do Gato (O JOIN): Junta a F7 na tabela de scores usando o Cod_Orgao
-    df = pd.merge(df_scores, df_bruta[['Cod_Orgao', 'F7_Qtd_Deficit_Fin']], on='Cod_Orgao', how='left')
+    df = pd.merge(df, df_bruta[['Cod_Orgao', 'F7_Qtd_Deficit_Fin']], on='Cod_Orgao', how='left')
 
     # Ordena pelo Score (do maior risco para o menor) e cria o Ranking Geral
     df = df.sort_values(by='Score_IA_19_Features', ascending=False).reset_index(drop=True)
