@@ -25,13 +25,19 @@ st.markdown("""
 # 3. Carregando os Dados do Script 02
 @st.cache_data 
 def carregar_dados():
-    df = pd.read_csv('arquivos_tabulares/resultados_auditoria_ia.csv', sep=';', decimal=',')
+    df_scores = pd.read_csv('arquivos_tabulares/resultados_auditoria_ia.csv', sep=';', decimal=',')
     
     # Carrega a Base Bruta original (que contém as 20 variáveis, incluindo a F7)
     df_bruta = pd.read_csv('arquivos_tabulares/df_features_consolidadas.csv', sep=';', decimal=',')
     
-    # 3. O Pulo do Gato (O JOIN): Junta a F7 na tabela de scores usando o Cod_Orgao
-    df = pd.merge(df, df_bruta[['Cod_Orgao', 'F7_Qtd_Deficit_Fin']], on='Cod_Orgao', how='left')
+    # Carrega os impactos SHAP individuais
+    df_shap_values = pd.read_csv('arquivos_tabulares/shap_values_detalhado.csv', sep=';', decimal=',')
+
+    # Faz o merge de tudo: 
+    # junta a F7 na tabela de scores usando o Cod_Orgao
+    df = pd.merge(df_scores, df_bruta[['Cod_Orgao', 'F7_Qtd_Deficit_Fin']], on='Cod_Orgao', how='left')
+
+    df = pd.merge(df, df_shap_values, on='Cod_Orgao', how='left') # Adiciona os valores SHAP por coluna
 
     # Ordena pelo Score (do maior risco para o menor) e cria o Ranking Geral
     df = df.sort_values(by='Score_IA_19_Features', ascending=False).reset_index(drop=True)
@@ -164,30 +170,41 @@ if orgao_selecionado:
         st.markdown("### Evidências de Afastamento da Normalidade")
         
         st.write(
-            "Análise isolada das variáveis que apresentaram comportamento atípico, "
-            "**ordenadas da maior para a menor influência no risco (conforme Gráfico SHAP)**. "
-            "A linha tracejada representa a mediana da rede federal, enquanto a linha vermelha aponta o fato registrado na entidade analisada."
+            "Análise isolada das variáveis que apresentaram comportamento atípico. "
+            "A linha tracejada representa a mediana da rede federal, enquanto a linha vermelha aponta o fato registrado nesta unidade."
         )
+
+        # ==============================================================================
+        # FILTRO DE RELEVÂNCIA (TOGGLE)
+        # ==============================================================================
+        filtro_relevancia = st.toggle("🎯 Filtrar apenas riscos relevantes (SHAP > 0.05)", value=False)
         
         pasta_dist = "graficos_distribuicao"
         try:
-            # Captura todos os arquivos gerados para esta UG no Script 02
             todos_arquivos = [f for f in os.listdir(pasta_dist) if f.startswith(f"Dist_{cod_orgao}_")]
             todos_arquivos.sort()
             
-            # SEPARAÇÃO DE LÓGICA:
-            # 1. Imagens regulares (o ranking SHAP)
             arquivos_regulares = [f for f in todos_arquivos if "EXTRA_F7" not in f]
-            # 2. A imagem extra da F7 (se existir)
             arquivo_f7_extra = [f for f in todos_arquivos if "EXTRA_F7" in f]
+
+            # Lógica do Filtro
+            if filtro_relevancia:
+                linha_atual = df_completo[df_completo['Cod_Orgao'] == cod_orgao].iloc[0]
+                
+                # Dinamicamente identifica quais colunas são as features (excluindo metadados)
+                colunas_shap = [c for c in df_completo.columns if c.startswith('F') and c != 'F7_Qtd_Deficit_Fin']
+                
+                features_relevantes = [f for f in colunas_shap if abs(linha_atual.get(f, 0)) >= 0.05]
+                
+                # Filtra os arquivos regulares
+                arquivos_regulares = [f for f in arquivos_regulares if any(fr in f for fr in features_relevantes)]
             
-            # Verifica se a F5 faz parte das anomalias detectadas
+            # --- SAÍDA DO BLOCO DE FILTRO ---
+            # A exibição deve ficar fora do 'if filtro_relevancia' para funcionar sempre
             f5_detectada = any("F5_Var_Pag_Repasse" in f for f in arquivos_regulares)
             
             if arquivos_regulares:
-                # Exibição padrão em duas colunas para as variáveis do ranking
                 col_esq, col_dir = st.columns(2)
-                
                 for index, arquivo in enumerate(arquivos_regulares):
                     caminho_dist = os.path.join(pasta_dist, arquivo)
                     if index % 2 == 0:
@@ -195,22 +212,17 @@ if orgao_selecionado:
                     else:
                         col_dir.image(caminho_dist, use_container_width=True)
                 
-                # SEÇÃO FINAL: Gatilho da F7 (Apenas se F5 existir e F7 foi gerada)
+                # Seção da F7 (Sempre respeitando se a F5 está visível)
                 if f5_detectada and arquivo_f7_extra:
                     st.divider()
                     st.markdown("#### 🚨 Evidência Material Complementar (F7)")
-                    st.info(
-                        "Como a variável **F5 (Variação de Pagamento de Repasse)** foi identificada como fator de risco, "
-                        "o painel exibe abaixo a distribuição da **F7 (Qtd Déficit Financeiro)**. "
-                        "Embora suprimida do modelo matemático para evitar colinearidade, a F7 é apresentada aqui "
-                        "para fundamentar a materialidade do déficit financeiro nesta unidade."
-                    )
+                    st.info("Detalhamento da variável F7 ativado pelo gatilho de risco na F5.")
                     
+                    col_f7_img, _ = st.columns(2)
                     caminho_f7 = os.path.join(pasta_dist, arquivo_f7_extra[0])
-                    st.image(caminho_f7, use_container_width=True)
-                    
+                    col_f7_img.image(caminho_f7, use_container_width=True)
             else:
-                st.info("Nenhum gráfico de distribuição específico encontrado para esta entidade.")
+                st.info("Nenhuma variável ultrapassou o limiar de relevância de 0.05 para esta entidade.")
                 
         except FileNotFoundError:
             st.error("A pasta 'graficos_distribuicao' não foi encontrada.")
