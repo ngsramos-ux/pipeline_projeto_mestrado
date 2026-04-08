@@ -27,6 +27,12 @@ st.markdown("""
 def carregar_dados():
     df = pd.read_csv('arquivos_tabulares/resultados_auditoria_ia.csv', sep=';', decimal=',')
     
+    # Carrega a Base Bruta original (que contém as 20 variáveis, incluindo a F7)
+    df_bruta = pd.read_csv('arquivos_tabulares/df_features_consolidadas.csv', sep=';', decimal=',')
+    
+    # 3. O Pulo do Gato (O JOIN): Junta a F7 na tabela de scores usando o Cod_Orgao
+    df = pd.merge(df_scores, df_bruta[['Cod_Orgao', 'F7_Qtd_Deficit_Fin']], on='Cod_Orgao', how='left')
+
     # Ordena pelo Score (do maior risco para o menor) e cria o Ranking Geral
     df = df.sort_values(by='Score_IA_19_Features', ascending=False).reset_index(drop=True)
     df['Posicao_Ranking'] = df.index + 1
@@ -95,10 +101,9 @@ if orgao_selecionado:
     st.divider()
 
     # --- ABAS DE NAVEGAÇÃO INTERNA ---
-    # Adicionamos a nova aba na primeira posição, totalizando 4 abas!
     aba1, aba2, aba3, aba4 = st.tabs(["🏆 Ranking Geral", "📊 Visão Multivariada (SHAP)", "📈 Provas de Isolamento (Distribuições)", "📚 Dicionário de Red Flags"])
     
-    # --- NOVA ABA 1: RANKING GERAL ---
+    # --- ABA 1: RANKING GERAL ---
     with aba1:
         st.markdown("### Ranking de Risco da Rede Federal (2023 a 2025)")
         st.write("Visão consolidada de todas as **45 Universidades Federais** classificadas como Unidades Prestadoras de Contas pelo TCU. Entidades na zona de risco (escore de risco > 0) estão destacadas em vermelho.")
@@ -152,7 +157,9 @@ if orgao_selecionado:
                 
         except FileNotFoundError:
             st.error("A pasta 'graficos_shap_risco' não foi encontrada.")
-    # --- ABA 3: DISTRIBUIÇÕES (Antiga Aba 2) ---
+
+
+    # --- ABA 3: DISTRIBUIÇÕES INDIVIDUAIS DAS FEATURES---
     with aba3:
         st.markdown("### Evidências de Afastamento da Normalidade")
         
@@ -161,8 +168,10 @@ if orgao_selecionado:
         pasta_dist = "graficos_distribuicao"
         try:
             arquivos_dist = [f for f in os.listdir(pasta_dist) if f.startswith(f"Dist_{cod_orgao}_")]
-            
             arquivos_dist.sort()
+            
+            # NOVO: O "Olheiro" - Verifica se o gráfico da F5 foi acionado para essa entidade
+            tem_f5 = any("F5" in arquivo for arquivo in arquivos_dist)
             
             if arquivos_dist:
                 col_esq, col_dir = st.columns(2)
@@ -173,12 +182,50 @@ if orgao_selecionado:
                         col_esq.image(caminho_dist, use_container_width=True)
                     else:
                         col_dir.image(caminho_dist, use_container_width=True)
+                
+                # ==============================================================================
+                # NOVO: GERAÇÃO DINÂMICA DO GRÁFICO DA F7 (SE A F5 ESTIVER PRESENTE)
+                # ==============================================================================
+                if tem_f5:
+                    st.markdown("---")
+                    st.markdown("#### 🚨 Análise Material Complementar (F7_Qtd_Deficit_Fin)")
+                    st.info("Como a variável **F5** apresentou comportamento anômalo, o painel resgatou automaticamente a distribuição da **F7** (ocultada no modelo original por colinearidade) para compor a evidência material.")
+                    
+                    # Verifica se a F7 existe na base que carregamos no passo anterior
+                    if 'F7_Qtd_Deficit_Fin' in df_completo.columns:
+                        import matplotlib.pyplot as plt
+                        import seaborn as sns
+                        
+                        valor_entidade_f7 = dados_orgao.get('F7_Qtd_Deficit_Fin', 0)
+                        mediana_rede_f7 = df_completo['F7_Qtd_Deficit_Fin'].median()
+                        
+                        # Exibe os valores exatos em formato de painel
+                        col_f7_1, col_f7_2 = st.columns(2)
+                        col_f7_1.metric("F7 - Valor desta Unidade", f"{valor_entidade_f7:.2f}")
+                        col_f7_2.metric("F7 - Mediana da Rede Federal", f"{mediana_rede_f7:.2f}")
+                        
+                        # Desenha o Gráfico ao vivo (estilo similar ao do Script 02)
+                        fig, ax = plt.subplots(figsize=(10, 3))
+                        sns.histplot(df_completo['F7_Qtd_Deficit_Fin'], bins=15, color='lightgray', ax=ax, kde=False)
+                        ax.axvline(valor_entidade_f7, color='red', linestyle='-', linewidth=3, label=f'Esta Unidade ({cod_orgao})')
+                        ax.axvline(mediana_rede_f7, color='blue', linestyle='--', linewidth=2, label='Mediana da Rede')
+                        
+                        ax.set_title("Distribuição da F7 na Rede Federal", fontsize=10)
+                        ax.set_xlabel("Valores da F7")
+                        ax.set_ylabel("Quantidade de Entidades")
+                        ax.legend()
+                        
+                        # Renderiza o gráfico no Streamlit
+                        st.pyplot(fig)
+                    else:
+                        st.warning("A coluna F7_Qtd_Deficit_Fin não foi encontrada na base de dados bruta.")
+
             else:
                 st.info("Nenhum gráfico de distribuição específico encontrado para esta entidade.")
         except FileNotFoundError:
             st.error("A pasta 'graficos_distribuicao' não foi encontrada.")
 
-    # --- ABA 4: DICIONÁRIO DE RED FLAGS (Antiga Aba 3) ---
+    # --- ABA 4: DICIONÁRIO DE RED FLAGS ---
     with aba4:
         st.markdown("### Dicionário de Indicadores (Features)")
         st.write("Consulte abaixo a descrição técnica de cada variável analisada pelo modelo e a justificativa para sua utilização como fator de risco.")
