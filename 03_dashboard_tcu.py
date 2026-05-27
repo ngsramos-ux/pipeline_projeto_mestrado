@@ -140,7 +140,7 @@ if orgao_selecionado:
     # --- ABA 2: SHAP (Antiga Aba 1) ---
     with aba2:
         st.markdown("### A Anatomia da Anomalia")
-        st.write("O gráfico abaixo (Waterfall SHAP) demonstra matematicamente quais indicadores contábeis empurraram esta entidade para fora da normalidade da rede federal. Barras **azuis** para a **esquerda** indicam fatores de agravamento do risco.")
+        st.write("O gráfico abaixo (Waterfall SHAP) demonstra matematicamente quais indicadores contábeis empurraram esta entidade para fora da normalidade da rede federal. Barras **vermelhas** para a **esquerda** indicam fatores de agravamento do risco.")
         
         pasta_shap = "graficos_shap_risco"
         
