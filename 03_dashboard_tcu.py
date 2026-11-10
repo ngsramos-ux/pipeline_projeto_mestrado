@@ -44,7 +44,8 @@ def carregar_dados():
     df['Posicao_Ranking'] = df.index + 1
     
     # Separa quem está em risco para o menu lateral
-    df_risco = df[df['Score_IA_19_Features'] > 0].copy()
+    # Zona de risco: escore positivo em pelo menos 50% das 100 execuções do modelo (coluna gerada no script 02)
+    df_risco = df[df['Na_Zona_Risco']].copy()
     
     return df, df_risco
 
@@ -103,6 +104,7 @@ if orgao_selecionado:
     with col3:
         st.markdown(f"**Escore de Anomalia (IA):**")
         st.markdown(f'<p class="risk-high">{score:.4f}</p>', unsafe_allow_html=True)
+        st.write(f"*(média de 100 execuções; escore positivo em {dados_orgao['Freq_Zona_Risco']:.0%} delas)*")
         
     st.divider()
 
@@ -112,16 +114,15 @@ if orgao_selecionado:
     # --- ABA 1: RANKING GERAL ---
     with aba1:
         st.markdown("### Ranking de Risco da Rede Federal (2023 a 2025)")
-        st.write("Visão consolidada de todas as **45 Universidades Federais** classificadas como Unidades Prestadoras de Contas pelo TCU. Entidades na zona de risco (escore de risco > 0) estão destacadas em vermelho.")
-        
+        st.write("Visão consolidada de todas as **45 Universidades Federais** classificadas como Unidades Prestadoras de Contas pelo TCU. O modelo foi executado 100 vezes, com sementes aleatórias diferentes: o escore é a média das execuções e as entidades na zona de risco (escore positivo em pelo menos 50% das execuções) estão destacadas em vermelho.")
+
         # Filtra e renomeia as colunas para ficar com cara de relatório oficial
-        df_exibicao = df_completo[['Posicao_Ranking', 'Nome_Orgao', 'Cod_Orgao', 'Score_IA_19_Features']].copy()
-        df_exibicao.columns = ['Posição', 'Universidade', 'Código UG', 'Escore de Risco (IA)']
-        
+        df_exibicao = df_completo[['Posicao_Ranking', 'Nome_Orgao', 'Cod_Orgao', 'Score_IA_19_Features', 'Freq_Zona_Risco', 'Na_Zona_Risco']].copy()
+        df_exibicao.columns = ['Posição', 'Universidade', 'Código UG', 'Escore de Risco (IA)', 'Execuções com escore positivo', 'Zona de risco']
+
         # --- LÓGICA DE CORES (PANDAS STYLER) ---
         def destacar_risco(row):
-            # Se o score que indica risco no seu modelo for negativo, mude de "> 0" para "< 0"
-            if row['Escore de Risco (IA)'] > 0:
+            if row['Zona de risco']:
                 # Fundo vermelho bem claro, texto em vermelho escuro
                 return ['background-color: #ffe6e6; color: #a30000; font-weight: bold'] * len(row)
             else:
@@ -132,10 +133,10 @@ if orgao_selecionado:
         df_estilizado = df_exibicao.style.apply(destacar_risco, axis=1)
         
         # Opcional: Formata a coluna de Escore para mostrar apenas 4 casas decimais
-        df_estilizado = df_estilizado.format({"Escore de Risco (IA)": "{:.4f}"})
+        df_estilizado = df_estilizado.format({"Escore de Risco (IA)": "{:.4f}", "Execuções com escore positivo": "{:.0%}"})
         
         # Exibe a tabela formatada no Streamlit
-        st.dataframe(df_estilizado, use_container_width=True, hide_index=True)
+        st.dataframe(df_estilizado, width="stretch", hide_index=True)
 
     # --- ABA 2: SHAP (Antiga Aba 1) ---
     with aba2:
@@ -146,7 +147,7 @@ if orgao_selecionado:
         
         # --- NOVO: Botão interativo para alternar as visões ---
         # O padrão é False (Desligado = Resumido)
-        mostrar_expandido = st.toggle("🔍 Mostrar Visão Expandida (Todas as 20 Variáveis)")
+        mostrar_expandido = st.toggle("🔍 Mostrar Visão Expandida (Todos os 19 Indicadores)")
         
         # Define qual palavra procurar no nome do arquivo com base no botão
         tipo_grafico = "_Expandido" if mostrar_expandido else "_Resumido"
@@ -157,7 +158,7 @@ if orgao_selecionado:
             
             if arquivos_shap:
                 caminho_imagem_shap = os.path.join(pasta_shap, arquivos_shap[0])
-                st.image(caminho_imagem_shap, use_container_width=True)
+                st.image(caminho_imagem_shap, width="stretch")
             else:
                 st.warning(f"⚠️ Gráfico SHAP ({tipo_grafico.replace('_', '')}) não encontrado na pasta 'graficos_shap_risco'.")
                 
@@ -192,7 +193,7 @@ if orgao_selecionado:
                 linha_atual = df_completo[df_completo['Cod_Orgao'] == cod_orgao].iloc[0]
                 
                 # Dinamicamente identifica quais colunas são as features (excluindo metadados)
-                colunas_shap = [c for c in df_completo.columns if c.startswith('F') and c != 'F7_Qtd_Deficit_Fin']
+                colunas_shap = [c for c in df_completo.columns if c.startswith('F') and c[1:2].isdigit() and c != 'F7_Qtd_Deficit_Fin']
                 
                 features_relevantes = [f for f in colunas_shap if abs(linha_atual.get(f, 0)) >= 0.05]
                 
@@ -208,9 +209,9 @@ if orgao_selecionado:
                 for index, arquivo in enumerate(arquivos_regulares):
                     caminho_dist = os.path.join(pasta_dist, arquivo)
                     if index % 2 == 0:
-                        col_esq.image(caminho_dist, use_container_width=True)
+                        col_esq.image(caminho_dist, width="stretch")
                     else:
-                        col_dir.image(caminho_dist, use_container_width=True)
+                        col_dir.image(caminho_dist, width="stretch")
                 
                 # Seção da F7 (Sempre respeitando se a F5 está visível)
                 if f5_detectada and arquivo_f7_extra:
@@ -220,7 +221,7 @@ if orgao_selecionado:
                     
                     col_f7_img, _ = st.columns(2)
                     caminho_f7 = os.path.join(pasta_dist, arquivo_f7_extra[0])
-                    col_f7_img.image(caminho_f7, use_container_width=True)
+                    col_f7_img.image(caminho_f7, width="stretch")
             else:
                 st.info("Nenhuma variável ultrapassou o limiar de relevância de 0.05 para esta entidade.")
                 
@@ -236,4 +237,4 @@ if orgao_selecionado:
             st.warning(df_dicionario["Aviso"].iloc[0])
         else:
             # Renderiza a tabela do Excel interativa (com scroll, ordenação, etc.)
-            st.dataframe(df_dicionario, use_container_width=True, hide_index=True)
+            st.dataframe(df_dicionario, width="stretch", hide_index=True)
