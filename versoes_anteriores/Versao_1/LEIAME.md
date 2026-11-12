@@ -1,6 +1,6 @@
 # Versão 1
 
-Cópia dos arquivos da Versão 1 do projeto, igual ao commit `37d21fb` do repositório. Ela foi guardada para registro e comparação, e a versão em uso é a Versão 2, que fica na raiz do repositório.
+Cópia dos arquivos da Versão 1 do projeto, igual ao commit `37d21fb` do repositório. Ela foi guardada para registro e comparação. A Versão 2 está em `versoes_anteriores/Versao_2`, e a Versão 3 é a estrutura numerada da raiz do repositório.
 
 ## Diferenças em relação à Versão 2
 
@@ -14,6 +14,6 @@ Zona de risco (19 indicadores, semente 42, escore positivo), nesta ordem: UNILA,
 
 ## Observações
 
-- O arquivo de dados brutos (`Exportação_completa_mestrado.zip`) não foi copiado para esta pasta porque é o mesmo da Versão 2. Ele está em `arquivos_tabulares`, na raiz do repositório.
+- O arquivo de dados brutos (`Exportação_completa_mestrado.zip`) não foi copiado para esta pasta porque é o mesmo da Versão 2. Ele está em `versoes_anteriores/Versao_2/arquivos_tabulares`.
 - O arquivo `waterfall_unila.svg` desta versão está vazio, por um erro na célula que o gerava. O erro foi corrigido na Versão 2.
 - Para abrir o painel desta versão, execute o comando `streamlit run 03_dashboard_tcu.py` de dentro desta pasta.

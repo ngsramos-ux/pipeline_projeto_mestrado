@@ -14,7 +14,7 @@ echo =======================================================
 echo.
 
 :: 1. Ativa o ambiente virtual exclusivo deste projeto
-call ".venv\Scripts\activate.bat"
+call "..\..\.venv\Scripts\activate.bat"
 
 :: 2. Inicia o servidor do Streamlit
 python -m streamlit run 03_dashboard_tcu.py

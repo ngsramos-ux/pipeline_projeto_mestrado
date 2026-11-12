@@ -1,8 +1,9 @@
-# Ambientes Virtuais
+# Ambientes virtuais e cache do Python
 .venv/
 env/
 __pycache__/
+.ipynb_checkpoints/
 
-# (OPCIONAL) Se o seu arquivo CSV bruto tiver mais de 100MB, 
-# tire o "#" da linha abaixo para o Git ignorá-lo e não travar o envio:
-arquivos_tabulares/Exportação_completa_mestrado.csv
+# Dados brutos descompactados: só os zips vão para o GitHub (limite de 100 MB por arquivo)
+00_extracao/dados_brutos/*.csv
+versoes_anteriores/Versao_2/arquivos_tabulares/Exportação_completa_mestrado.csv
