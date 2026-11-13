@@ -16,8 +16,8 @@ O repositório está na **Versão 3**, em desenvolvimento no ramo `versao-3`. O 
 
 | Etapa | Pasta | Situação |
 | --- | --- | --- |
-| 0. Extração | `00_extracao` | Consulta pronta. 2016 extraído e conferido; 2017 a 2025 extraídos, aguardando conferência |
-| 1. Conferência e consolidação | `01_conferencia_e_consolidacao` | Código pronto e testado com os dados de 2016 |
+| 0. Extração | `00_extracao` | Concluída: 2016 a 2025 extraídos (os zips anuais entram no repositório em seguida) |
+| 1. Conferência e consolidação | `01_conferencia_e_consolidacao` | Concluída em 13/11/2026: conferência sem falhas e base consolidada gerada (a base entra no repositório em seguida) |
 | 2. Indicadores | `02_indicadores` | A fazer |
 | 3. Protocolo de experimentos | `03_protocolo` | A fazer |
 | 4. Modelagem | `04a` a `04d` | A fazer |
@@ -97,13 +97,13 @@ A análise principal cobre **44 universidades**, de **2017 a 2025**, com **2016*
 | Grupo | Universidades | Anos na análise |
 | --- | --- | --- |
 | Antigas | 39 universidades, códigos de 26231 a 26450 | 2017 a 2025 (2016 como base) |
-| Novas | UFCAT (26452), UFJ (26453), UFR (26454), UFDPar (26455) e UFAPE (26456) | 2021 a 2025 (2020 excluído, por ser exercício parcial de implantação) |
+| Novas | UFCAT (26452), UFJ (26453), UFR (26454), UFDPar (26455) e UFAPE (26456) | 2021 a 2025 (2020 excluído: primeiro exercício, sem saldo de abertura) |
 | Excluída | UFNT (26457) | Nenhum. Entra só num teste de sensibilidade com 2024 e 2025 |
 
 Motivos das regras:
 
 1. **Período.** 2016 é o primeiro exercício disponível na base do Tesouro Gerencial e já segue integralmente o Plano de Contas Aplicado ao Setor Público (PCASP), implantado no SIAFI em 2015. Os testes mostraram mês de abertura, mês de encerramento e continuidade de saldos entre exercícios a partir de 2016.
-2. **Exercício completo.** Só entram exercícios em que a universidade funcionou o ano inteiro como órgão autônomo. Em 2020, as universidades novas tiveram de um terço à metade do volume normal de lançamentos.
+2. **Primeiro exercício.** Fica fora o primeiro exercício de existência de cada universidade como órgão, que não tem saldo de abertura (mês 0). Em 2020, o patrimônio das universidades novas foi formado ao longo do ano, e o volume de lançamentos ficou em torno da metade do normal. Por isso, os indicadores de saldo e a variação entre anos do desenho D não teriam uma base comparável. Elas tiveram movimento nos 12 meses de 2020; a UFNT, só em novembro e dezembro.
 3. **UFNT.** A implantação se estendeu de 2021 a 2023, com volume anual de lançamentos entre 13% e 35% do volume de 2025. Seus alertas seriam explicados pela implantação, e não pela contabilidade. Por ser a primeira colocada da Versão 2, um teste de sensibilidade mostra o efeito da retirada.
 
 ## Etapas
@@ -132,6 +132,8 @@ Diagnósticos feitos antes da extração (consultas em `sql/`):
 
 ### Etapa 1. Conferência e consolidação (`01_conferencia_e_consolidacao`)
 
+Notebook da etapa: `01_conferencia_e_consolidacao.ipynb`, que roda as duas partes abaixo e mostra o que não passou em cada conferência.
+
 **Conferência** (`python -m src.qualidade`). Lê todos os anos de `00_extracao/dados_brutos` e grava `relatorio_qualidade.xlsx`, com o status OK, ATENÇÃO ou FALHA para cada conferência:
 
 | Nível | Conferência |
@@ -150,6 +152,12 @@ Diagnósticos feitos antes da extração (consultas em `sql/`):
 | `saldos_mensais.parquet` | Saldo de cada conta no fim de cada mês, por universidade |
 | `dimensoes.xlsx` | Nomes das universidades, das UGs e das contas |
 | `LEIAME.md` | Descrição das colunas |
+
+Resultado (13/11/2026): nenhuma FALHA. A base tem 4,38 milhões de linhas de movimentos e 1,66 milhão de linhas de saldos, de 2016 a 2025, e Ativo = Passivo + PL fecha ao centavo nas 426 universidades-ano. As três ATENÇÕES são esperadas:
+
+- As 6 universidades novas não têm mês 0 em 2020, seu primeiro exercício.
+- Na abertura de 2021, 10 universidades tiveram saldos reclassificados do grupo 2.1.8 (demais obrigações de curto prazo) para o grupo 2.1.5, no total de R$ 7,0 milhões, sem alterar o total do passivo. Um indicador que use esses grupos separadamente precisa tratar essa quebra.
+- Na abertura de cada exercício, há trocas de saldo entre contas de uma mesma classe, como a passagem do resultado do exercício para resultados de exercícios anteriores (grupo 2.3.7). A soma das diferenças por universidade, ano e classe é zero.
 
 A base é completa: as regras de inclusão do universo são aplicadas só na montagem de cada desenho. Indicadores de fluxo usam os meses 1 a 12, e saldos usam os meses 0 a 13.
 
@@ -257,7 +265,9 @@ Requisitos: Python 3.10 ou superior e as bibliotecas de `requirements.txt`.
 pip install -r requirements.txt
 ```
 
-Comandos, a partir da pasta raiz do repositório:
+Cada etapa tem um notebook na própria pasta, que chama as funções de `src` e guarda os resultados ali. Na etapa 1, é o `01_conferencia_e_consolidacao/01_conferencia_e_consolidacao.ipynb`. No VS Code, é preciso escolher o ambiente virtual como kernel do notebook (o VS Code pede para instalar o `ipykernel` na primeira vez).
+
+As mesmas etapas também podem ser rodadas pelo terminal, a partir da pasta raiz do repositório:
 
 ```
 python -m src.qualidade        # etapa 1: conferência dos arquivos de 00_extracao/dados_brutos

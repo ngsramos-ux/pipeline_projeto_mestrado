@@ -28,6 +28,10 @@ from pandas.api.types import union_categoricals
 from src.leitura import ler_ano, listar_arquivos
 
 ZERO = 0.005  # valores menores que meio centavo são tratados como zero
+
+
+class ConsolidacaoBloqueada(Exception):
+    """Impede a consolidação quando a conferência não foi feita ou tem FALHA."""
 MESES = list(range(0, 15))
 
 LEIAME = """# Base consolidada (2016 a 2025)
@@ -82,7 +86,7 @@ def _verificar_relatorio(pasta_qualidade: Path, forcar: bool) -> None:
         if forcar:
             print(f"AVISO: {msg}")
             return
-        raise SystemExit(msg)
+        raise ConsolidacaoBloqueada(msg)
     resumo = pd.read_excel(relatorio, sheet_name="Resumo")
     falhas = resumo[resumo["status"] == "FALHA"]
     if len(falhas):
@@ -90,7 +94,7 @@ def _verificar_relatorio(pasta_qualidade: Path, forcar: bool) -> None:
         if forcar:
             print(f"AVISO: {msg}")
             return
-        raise SystemExit(msg + ". Resolva antes de consolidar ou use --forcar.")
+        raise ConsolidacaoBloqueada(msg + ". Resolva antes de consolidar ou use --forcar.")
     print("Relatório de qualidade sem falhas. Iniciando a consolidação.\n")
 
 
@@ -129,7 +133,7 @@ def consolidar(pasta_brutos: str | Path, pasta_saida: str | Path,
                         "cod_gnd": "int16", "cod_elemento": "int16"})
         # Conferência interna: retirar as linhas zeradas não muda o total
         if abs(df["mov"].sum() - total_bruto) > 1.0:
-            raise SystemExit(f"{caminho.name}: o total mudou ao retirar linhas zeradas. Verifique o arquivo.")
+            raise RuntimeError(f"{caminho.name}: o total mudou ao retirar linhas zeradas. Verifique o arquivo.")
         movimentos.append(df)
         print(f"{len(df):,} linhas com movimento".replace(",", "."))
 
@@ -145,7 +149,7 @@ def consolidar(pasta_brutos: str | Path, pasta_saida: str | Path,
     soma = mov.groupby(["ano", "cod_orgao"])["mov"].sum()
     dif = (ultimo.reindex(soma.index, fill_value=0.0) - soma).abs().max()
     if dif > 1.0:
-        raise SystemExit(f"Saldos inconsistentes com os movimentos (diferença máxima de R$ {dif:,.2f}).")
+        raise RuntimeError(f"Saldos inconsistentes com os movimentos (diferença máxima de R$ {dif:,.2f}).")
 
     # Tabelas de nomes: fica o nome do ano mais recente
     def mais_recente(tabelas: list[pd.DataFrame], chave: list[str]) -> pd.DataFrame:
@@ -178,7 +182,10 @@ def main() -> None:
     parser.add_argument("--qualidade", default="01_conferencia_e_consolidacao", help="Pasta do relatório de qualidade")
     parser.add_argument("--forcar", action="store_true", help="Consolida mesmo com falhas no relatório")
     args = parser.parse_args()
-    consolidar(args.brutos, args.saida, args.qualidade, args.forcar)
+    try:
+        consolidar(args.brutos, args.saida, args.qualidade, args.forcar)
+    except ConsolidacaoBloqueada as erro:
+        raise SystemExit(f"Consolidação não executada: {erro}")
 
 
 if __name__ == "__main__":
