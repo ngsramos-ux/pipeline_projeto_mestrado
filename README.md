@@ -16,9 +16,9 @@ O repositório está na **Versão 3**, em desenvolvimento no ramo `versao-3`. O 
 
 | Etapa | Pasta | Situação |
 | --- | --- | --- |
-| 0. Extração | `00_extracao` | Concluída: 2016 a 2025 extraídos (os zips anuais entram no repositório em seguida) |
-| 1. Conferência e consolidação | `01_conferencia_e_consolidacao` | Concluída em 13/11/2026: conferência sem falhas e base consolidada gerada (a base entra no repositório em seguida) |
-| 2. Indicadores | `02_indicadores` | A fazer |
+| 0. Extração | `00_extracao` | Concluída: 2016 a 2025 extraídos e guardados em zips anuais |
+| 1. Conferência e consolidação | `01_conferencia_e_consolidacao` | Concluída em 13/11/2026: conferência sem falhas e base consolidada gerada |
+| 2. Indicadores | `02_indicadores` | Em andamento: `src/indicadores.py` escrito e validado contra a Versão 2 |
 | 3. Protocolo de experimentos | `03_protocolo` | A fazer |
 | 4. Modelagem | `04a` a `04d` | A fazer |
 | 5. Avaliação | `05_avaliacao` | A fazer. O levantamento dos registros de controle pode começar em paralelo |
@@ -178,7 +178,16 @@ Os 20 indicadores da Versão 2, adaptados da literatura e da experiência de aud
 | F9 | Tendência do resultado patrimonial | F19 | Cancelamento de restos a pagar não processados |
 | F10 | Volatilidade da necessidade de financiamento de curto prazo | F20 | Volatilidade das provisões |
 
-Ainda em aberto nesta etapa: se F10, F11, F14, F15 e F20 passam a usar saldos (hoje usam o movimento do mês), a lista de indicadores do desenho D e a inclusão de indicadores de Martins (2019). Antes de calcular os novos desenhos, um teste de regressão confere se o novo código reproduz os indicadores da Versão 2.
+Regras definidas para a Versão 3 (`src/indicadores.py`):
+
+- F10, F11, F14, F15 e F20 usam o saldo das contas no fim de cada mês, e não o movimento do mês.
+- As séries mensais têm todos os meses do período, com zero nos meses sem movimento.
+- F10 passa a somar os demais créditos (1.1.3) e os estoques (1.1.5), que estavam de fora, e F15 passa a usar os créditos 1.1.2 + 1.1.3. As universidades quase não usam a conta 1.1.2: no fim de 2024, só 5 tinham saldo nela.
+- F2 e F20 continuam como estão. Só 6 universidades têm F2 diferente de zero, e só 1 tem F20; a regra do padrão comum, na etapa 3, decide se entram nos modelos.
+
+O teste de regressão confirmou o código: com as regras da Versão 2 e os dados brutos originais da Versão 2, os 20 indicadores das 45 universidades saem idênticos aos da Versão 2. Com a nova extração, F6, F13, F15 e F20 diferem, porque a extração antiga tinha 826 mil linhas sem movimento, criadas pela métrica de variação cambial, que entravam como meses com valor zero.
+
+Ainda em aberto nesta etapa: a lista de indicadores do desenho D e a inclusão de indicadores de Martins (2019).
 
 ### Etapa 3. Protocolo de experimentos (`03_protocolo`)
 

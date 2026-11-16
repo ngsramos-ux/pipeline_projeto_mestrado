@@ -66,15 +66,17 @@ def _abrir_binario(caminho: Path):
 
 
 def _detectar_formato(caminho: Path) -> tuple[str, str]:
-    """Lê a primeira linha e devolve (codificação, separador)."""
+    """Lê o início do arquivo e devolve (codificação, separador)."""
     with _abrir_binario(caminho) as f:
-        primeira = f.readline()
+        amostra = f.read(5_000_000)  # 5 MB: acentos podem aparecer só nos nomes, longe do cabeçalho
+    primeira = amostra.split(b"\n", 1)[0]
     try:
-        texto = primeira.decode("utf-8-sig")
+        amostra.decode("utf-8-sig")
         codificacao = "utf-8-sig"
-    except UnicodeDecodeError:
-        texto = primeira.decode("latin1")
-        codificacao = "latin1"
+    except UnicodeDecodeError as erro:
+        # Um caractere UTF-8 cortado no fim da amostra não indica outra codificação
+        codificacao = "utf-8-sig" if erro.start >= len(amostra) - 3 else "latin1"
+    texto = primeira.decode(codificacao if codificacao != "utf-8-sig" else "utf-8-sig", errors="replace")
     separador = ";" if texto.count(";") > texto.count(",") else ","
     return codificacao, separador
 

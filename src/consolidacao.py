@@ -79,6 +79,29 @@ ano mais recente em que aparecem.
 """
 
 
+def gravar_excel_como_texto(caminho: Path, abas: dict[str, pd.DataFrame]) -> None:
+    """
+    Grava as tabelas em Excel garantindo que textos fiquem como texto.
+
+    Muitos nomes de contas do SIAFI começam com "=" (por exemplo, "= EMPENHOS PAGOS"). Gravados
+    pelo pandas, o Excel os trata como fórmulas, que aparecem como erro e voltam vazias na leitura.
+    """
+    from openpyxl import Workbook
+
+    livro = Workbook()
+    livro.remove(livro.active)
+    for nome, tabela in abas.items():
+        planilha = livro.create_sheet(nome)
+        planilha.append(list(tabela.columns))
+        for linha in tabela.itertuples(index=False):
+            planilha.append([None if pd.isna(v) else (v.item() if hasattr(v, "item") else v) for v in linha])
+        for linha in planilha.iter_rows(min_row=2):
+            for celula in linha:
+                if isinstance(celula.value, str) and celula.value.startswith("="):
+                    celula.data_type = "s"
+    livro.save(caminho)
+
+
 def _verificar_relatorio(pasta_qualidade: Path, forcar: bool) -> None:
     relatorio = pasta_qualidade / "relatorio_qualidade.xlsx"
     if not relatorio.exists():
@@ -160,10 +183,11 @@ def consolidar(pasta_brutos: str | Path, pasta_saida: str | Path,
     pasta_saida.mkdir(parents=True, exist_ok=True)
     mov.to_parquet(pasta_saida / "movimentos.parquet", index=False, compression="zstd")
     sal.to_parquet(pasta_saida / "saldos_mensais.parquet", index=False, compression="zstd")
-    with pd.ExcelWriter(pasta_saida / "dimensoes.xlsx") as w:
-        mais_recente(orgaos, ["cod_orgao"]).to_excel(w, sheet_name="orgaos", index=False)
-        mais_recente(ugs, ["cod_ug"]).to_excel(w, sheet_name="ugs", index=False)
-        mais_recente(contas, ["cod_conta"]).to_excel(w, sheet_name="contas", index=False)
+    gravar_excel_como_texto(pasta_saida / "dimensoes.xlsx", {
+        "orgaos": mais_recente(orgaos, ["cod_orgao"]),
+        "ugs": mais_recente(ugs, ["cod_ug"]),
+        "contas": mais_recente(contas, ["cod_conta"]),
+    })
     (pasta_saida / "LEIAME.md").write_text(LEIAME, encoding="utf-8")
 
     print("\nBase consolidada:")
