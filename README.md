@@ -18,7 +18,7 @@ O repositório está na **Versão 3**, em desenvolvimento no ramo `versao-3`. O 
 | --- | --- | --- |
 | 0. Extração | `00_extracao` | Concluída: 2016 a 2025 extraídos e guardados em zips anuais |
 | 1. Conferência e consolidação | `01_conferencia_e_consolidacao` | Concluída em 13/11/2026: conferência sem falhas e base consolidada gerada |
-| 2. Indicadores | `02_indicadores` | Em andamento: os 23 indicadores e as regras do desenho D programados; F1 a F20 validados contra a Versão 2 |
+| 2. Indicadores | `02_indicadores` | Em andamento: indicadores, tabelas dos desenhos e verificações programados; faltam o dicionário e o notebook |
 | 3. Protocolo de experimentos | `03_protocolo` | A fazer |
 | 4. Modelagem | `04a` a `04d` | A fazer |
 | 5. Avaliação | `05_avaliacao` | A fazer. O levantamento dos registros de controle pode começar em paralelo |
@@ -194,7 +194,9 @@ Regras da Versão 3, todas programadas em `src/indicadores.py`:
 
 O teste de regressão confirmou o código: com as regras da Versão 2 e os dados brutos originais da Versão 2, os 20 indicadores das 45 universidades saem idênticos aos da Versão 2. Com a nova extração, F6, F13, F15 e F20 diferem, porque a extração antiga tinha 826 mil linhas sem movimento, criadas pela métrica de variação cambial, que entravam como meses com valor zero. As regras da Versão 2 continuam disponíveis no código só para esse teste.
 
-Ainda em aberto nesta etapa: montar as tabelas dos desenhos (`src/desenhos.py`), programar as verificações simples do painel (`src/verificacoes.py`), gerar o dicionário de indicadores e o notebook da etapa.
+As tabelas dos quatro desenhos são montadas por `src/desenhos.py`, e as verificações simples do painel, por `src/verificacoes.py`.
+
+Ainda em aberto nesta etapa: gerar o dicionário de indicadores e o notebook da etapa, que grava as tabelas em `02_indicadores`.
 
 ### Etapa 3. Protocolo de experimentos (`03_protocolo`)
 
@@ -216,9 +218,11 @@ Os quatro desenhos diferem na unidade de registro. B, C e D multiplicam o númer
 | Desenho | Unidade de registro | Períodos | Registros com 44 | Registros com 39 |
 | --- | --- | --- | --- | --- |
 | A. Atual | Universidade no triênio | 2023 a 2025 | 44 | 39 |
-| B. Janela móvel de 2 anos | Universidade por janela de 24 meses | 8 janelas, de 2017–2018 a 2024–2025 | 332 | 312 |
-| C. Janela móvel de 3 anos | Universidade por janela de 36 meses | 7 janelas, de 2017–2019 a 2023–2025 | 288 | 273 |
-| D. Anual + variação | Universidade por ano: nível do ano e variação em relação ao ano anterior | 9 anos, de 2017 a 2025 | 371 | 351 |
+| B. Janela móvel de 2 anos | Universidade por janela de 24 meses | 8 janelas, de 2017–2018 a 2024–2025 | 330 | 310 |
+| C. Janela móvel de 3 anos | Universidade por janela de 36 meses | 7 janelas, de 2017–2019 a 2023–2025 | 284 | 269 |
+| D. Anual + variação | Universidade por ano: nível do ano e variação em relação ao ano anterior | 9 anos, de 2017 a 2025 | 369 | 349 |
+
+As contagens são as da análise principal, conferidas em `src/desenhos.py`. Já descontam os registros que atravessam a saída de campi da UFG (de 2021 para 2022) e da UFRPE (de 2019 para 2020): 2 em B, 4 em C e 2 em D. Esses registros e os da UFNT em 2024 e 2025 entram em testes de sensibilidade.
 
 Nos desenhos B, C e D, os modelos são treinados com todos os períodos juntos. Antes disso, os indicadores são padronizados dentro de cada período, para que cada universidade seja comparada às pares do mesmo período e choques comuns, como a pandemia, não pareçam anomalias.
 
@@ -269,8 +273,8 @@ Painel em Streamlit com o resultado final. Quando a Versão 3 for incorporada ao
 | `qualidade.py` | Conferências da etapa 1 | Pronto |
 | `consolidacao.py` | Base consolidada da etapa 1 | Pronto |
 | `indicadores.py` | Cálculo dos 23 indicadores para qualquer período (`calcular_indicadores`) e por ano, com a variação, para o desenho D (`calcular_indicadores_anuais`) | Pronto |
-| `desenhos.py` | Montagem das matrizes dos desenhos A a D | A fazer |
-| `verificacoes.py` | Verificações simples do painel | A fazer |
+| `desenhos.py` | Tabelas dos desenhos A a D, com o motivo de cada registro que fica fora, seleção da rodada (44 ou 39 universidades, testes de sensibilidade) e padronização dentro do período | Pronto |
+| `verificacoes.py` | As 5 verificações simples do painel, por universidade e ano, com o valor envolvido | Pronto |
 | `modelos.py` | 5 modelos e consenso | A fazer |
 | `avaliacao.py` | Frentes de avaliação | A fazer |
 

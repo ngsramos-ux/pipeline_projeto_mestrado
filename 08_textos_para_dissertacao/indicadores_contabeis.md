@@ -91,7 +91,7 @@ CONSELHO FEDERAL DE CONTABILIDADE. NBC TSP 07, de 22 de setembro de 2017. Ativo 
 
 FREITAS, José Antonio de Carvalho. Detecção de anomalias em indicadores contábeis utilizando dados públicos de empresas estatais federais. **Revista Foco**, v. 18, n. 9, e9664, p. 1-28, 2025. DOI: 10.54751/revistafoco.v18n9-089.
 
-KIM, Yongjun; SUN, Eun Jung. Unsupervised anomaly detection in hospital financial statements: a multi-algorithm consensus approach with explainable AI. **IEEE Access**, 2026. DOI: 10.1109/ACCESS.2026.3712282.
+KIM, Yongjun; SUN, Eun Jung. Unsupervised anomaly detection in hospital financial statements: a multi-algorithm consensus approach with explainable AI. **IEEE Access**, v. 14, p. 106422-106435, 2026. DOI: 10.1109/ACCESS.2026.3712282.
 
 MARTINS, Victor Hugo Rodrigues. **Utilização de indicadores econômico-financeiros como red flags na auditoria financeira do setor público**. Orientador: José Alves Dantas. Brasília, DF: Tribunal de Contas da União, Instituto Serzedello Corrêa, 2019. (Coletânea de Pós-Graduação, v. 1, n. 15, Auditoria Financeira).
 
