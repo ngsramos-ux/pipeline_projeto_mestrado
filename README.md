@@ -18,7 +18,7 @@ O repositório está na **Versão 3**, em desenvolvimento no ramo `versao-3`. O 
 | --- | --- | --- |
 | 0. Extração | `00_extracao` | Concluída: 2016 a 2025 extraídos e guardados em zips anuais |
 | 1. Conferência e consolidação | `01_conferencia_e_consolidacao` | Concluída em 13/11/2026: conferência sem falhas e base consolidada gerada |
-| 2. Indicadores | `02_indicadores` | Em andamento: `src/indicadores.py` escrito e validado contra a Versão 2 |
+| 2. Indicadores | `02_indicadores` | Em andamento: F1 a F20 programados e validados contra a Versão 2; lista final de indicadores e regras dos desenhos definidas |
 | 3. Protocolo de experimentos | `03_protocolo` | A fazer |
 | 4. Modelagem | `04a` a `04d` | A fazer |
 | 5. Avaliação | `05_avaliacao` | A fazer. O levantamento dos registros de controle pode começar em paralelo |
@@ -70,6 +70,7 @@ pipeline_projeto_mestrado/
 │   └── comparacao_desenhos/
 ├── 06_resultado_final/
 ├── 07_painel/
+├── 08_textos_para_dissertacao/        textos que serão incorporados à dissertação
 ├── src/                               funções usadas por várias etapas
 └── versoes_anteriores/
     ├── Versao_1/
@@ -86,6 +87,7 @@ pipeline_projeto_mestrado/
 | `05_avaliacao` | Resultados dos desenhos e registros de controle | Avaliação interna, avaliação externa e comparação | Métricas de cada desenho e escolha do desenho final |
 | `06_resultado_final` | Desenho escolhido | Ranking final, explicações e testes de sensibilidade | Tabelas e gráficos finais |
 | `07_painel` | Resultado final | Painel interativo em Streamlit | Painel publicado |
+| `08_textos_para_dissertacao` | Decisões e resultados de cada etapa | Redação, ao longo do trabalho, de textos sobre o método e os resultados | Textos para a dissertação (por enquanto, `indicadores_contabeis.md`) |
 | `src` | Usada por todas as etapas | Funções de leitura, conferência, indicadores, modelos e avaliação | Código comum, escrito uma única vez |
 
 Cada pasta de etapa terá um notebook curto que chama as funções de `src` e guarda os resultados na própria pasta. Assim, quem abre a pasta vê o processo e o resultado daquela etapa, e o código comum fica num lugar só.
@@ -163,7 +165,7 @@ A base é completa: as regras de inclusão do universo são aplicadas só na mon
 
 ### Etapa 2. Indicadores (`02_indicadores`)
 
-Os 20 indicadores da Versão 2, adaptados da literatura e da experiência de auditoria, serão recalculados para cada período de cada desenho:
+Os 20 indicadores das versões anteriores, adaptados de Freitas (2025) e da experiência de auditoria, mais 3 adaptados de Martins (2019), serão calculados para cada período de cada desenho. A origem e a adaptação de cada um estão em `08_textos_para_dissertacao/indicadores_contabeis.md`.
 
 | Código | Indicador | Código | Indicador |
 | --- | --- | --- | --- |
@@ -177,17 +179,22 @@ Os 20 indicadores da Versão 2, adaptados da literatura e da experiência de aud
 | F8 | Volatilidade da margem patrimonial | F18 | Despesas de exercícios anteriores sobre o total pago |
 | F9 | Tendência do resultado patrimonial | F19 | Cancelamento de restos a pagar não processados |
 | F10 | Volatilidade da necessidade de financiamento de curto prazo | F20 | Volatilidade das provisões |
+| F21 | Liquidez corrente (Martins, 2019) | F22 | Imobilizado sobre ativo (Martins, 2019) |
+| F23 | Taxa de depreciação de bens móveis (Martins, 2019) | | |
 
-Regras definidas para a Versão 3 (`src/indicadores.py`):
+Regras definidas para a Versão 3 (F1 a F20 já em `src/indicadores.py`):
 
 - F10, F11, F14, F15 e F20 usam o saldo das contas no fim de cada mês, e não o movimento do mês.
 - As séries mensais têm todos os meses do período, com zero nos meses sem movimento.
 - F10 passa a somar os demais créditos (1.1.3) e os estoques (1.1.5), que estavam de fora, e F15 passa a usar os créditos 1.1.2 + 1.1.3. As universidades quase não usam a conta 1.1.2: no fim de 2024, só 5 tinham saldo nela.
 - F2 e F20 continuam como estão. Só 6 universidades têm F2 diferente de zero, e só 1 tem F20; a regra do padrão comum, na etapa 3, decide se entram nos modelos.
+- F5, F7 e F12 medem os pagamentos pela conta 6.2.2.1.3.04 (crédito empenhado liquidado pago). As versões anteriores usavam o grupo 6.2.2.1.3, cujo movimento líquido é o valor empenhado no mês, e não o pago: na UFF, em janeiro de 2024, R$ 220,9 milhões no grupo contra R$ 52,5 milhões pagos.
+- F21 e F22 usam os saldos de fim de ano; nos desenhos A a C, entra a média dos anos da janela. F23 é a soma da depreciação de bens móveis do período sobre a soma dos saldos de bens móveis no fim de cada ano.
+- No desenho D, cada indicador é calculado com os 12 meses do ano. F9 vira resultado patrimonial do ano sobre a VPA do ano, F11 vira passivo circulante sobre ativo no fim do ano e F16 vira crescimento da VPD sobre o ano anterior. Cada indicador ganha a diferença simples em relação ao ano anterior, menos F16 e F19.
 
-O teste de regressão confirmou o código: com as regras da Versão 2 e os dados brutos originais da Versão 2, os 20 indicadores das 45 universidades saem idênticos aos da Versão 2. Com a nova extração, F6, F13, F15 e F20 diferem, porque a extração antiga tinha 826 mil linhas sem movimento, criadas pela métrica de variação cambial, que entravam como meses com valor zero.
+O teste de regressão confirmou o código: com as regras da Versão 2 e os dados brutos originais da Versão 2, os 20 indicadores das 45 universidades saem idênticos aos da Versão 2. Com a nova extração, F6, F13, F15 e F20 diferem, porque a extração antiga tinha 826 mil linhas sem movimento, criadas pela métrica de variação cambial, que entravam como meses com valor zero. As regras da Versão 2 continuam disponíveis no código só para esse teste.
 
-Ainda em aberto nesta etapa: a lista de indicadores do desenho D e a inclusão de indicadores de Martins (2019).
+Ainda em aberto nesta etapa: programar F21 a F23 e as regras do desenho D, montar as tabelas dos desenhos (`src/desenhos.py`), programar as verificações simples do painel, gerar o dicionário de indicadores e o notebook da etapa.
 
 ### Etapa 3. Protocolo de experimentos (`03_protocolo`)
 

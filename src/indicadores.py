@@ -12,6 +12,8 @@ Regras disponíveis (parâmetro `regras`):
           - as séries mensais têm todos os meses do período, com zero nos meses sem movimento (D36);
           - F10 inclui os estoques (1.1.5) e os demais créditos (1.1.3), e F15 usa os créditos
             1.1.2 + 1.1.3, porque as universidades quase não usam a conta 1.1.2 (D37);
+          - F5, F7 e F12 medem os pagamentos pela conta 6.2.2.1.3.04 (crédito empenhado liquidado
+            pago), e não pelo grupo 6.2.2.1.3, cujo movimento é o valor empenhado (D47);
           - a F19 usa a inscrição de restos a pagar do ano anterior a cada ano do período, mesmo
             que esse ano anterior esteja fora do período.
     "v2"  reprodução exata da Versão 2, usada só no teste de regressão: tudo calculado com o
@@ -177,8 +179,10 @@ def calcular_indicadores(mov: pd.DataFrame, sal: pd.DataFrame, anos: list[int],
     r["F3_Volatilidade_VPA"] = _cv(vpa_abs, "vpa", absoluto=False)
     r["F4_Volatilidade_VPD"] = _cv(vpd_abs, "vpd", absoluto=False)
 
-    # F5: volatilidade de pagamentos (62213) sobre repasses (8211)
-    pag = fluxo("62213", "pag")
+    # F5: volatilidade de pagamentos sobre repasses (8211). Os pagamentos também entram na F7 e na F12.
+    # v3 (D47): só a conta de crédito empenhado liquidado pago (6.2.2.1.3.04).
+    # v2: o grupo 6.2.2.1.3 inteiro, cujo movimento líquido é o crédito empenhado do mês, e não o pago.
+    pag = fluxo("6221304" if regras == "v3" else "62213", "pag")
     rep = fluxo("8211", "rep")
     t = _juntar(pag.assign(pag=pag["pag"].abs()), rep.assign(rep=rep["rep"].abs()))
     t["razao"] = _razao(t["pag"], t["rep"])
