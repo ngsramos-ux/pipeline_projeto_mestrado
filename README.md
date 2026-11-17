@@ -18,7 +18,7 @@ O repositório está na **Versão 3**, em desenvolvimento no ramo `versao-3`. O 
 | --- | --- | --- |
 | 0. Extração | `00_extracao` | Concluída: 2016 a 2025 extraídos e guardados em zips anuais |
 | 1. Conferência e consolidação | `01_conferencia_e_consolidacao` | Concluída em 13/11/2026: conferência sem falhas e base consolidada gerada |
-| 2. Indicadores | `02_indicadores` | Em andamento: indicadores, tabelas dos desenhos e verificações programados; faltam o dicionário e o notebook |
+| 2. Indicadores | `02_indicadores` | Pronta para rodar: código, dicionário e notebook prontos; falta rodar o notebook e guardar os resultados |
 | 3. Protocolo de experimentos | `03_protocolo` | A fazer |
 | 4. Modelagem | `04a` a `04d` | A fazer |
 | 5. Avaliação | `05_avaliacao` | A fazer. O levantamento dos registros de controle pode começar em paralelo |
@@ -59,6 +59,8 @@ pipeline_projeto_mestrado/
 │   ├── relatorio_qualidade.xlsx
 │   └── base_consolidada/              movimentos, saldos mensais e nomes
 ├── 02_indicadores/
+│   ├── dicionario_indicadores.xlsx    textos de cada indicador e verificação
+│   └── tabelas/                       tabelas dos desenhos e verificações (geradas pelo notebook)
 ├── 03_protocolo/
 ├── 04a_desenho_A_atual/
 ├── 04b_desenho_B_janelas_2_anos/
@@ -81,7 +83,7 @@ pipeline_projeto_mestrado/
 | --- | --- | --- | --- |
 | `00_extracao` | Banco do Tesouro Gerencial | Consulta SQL executada no SQuirrel, um ano por vez | Um zip por ano, de 2016 a 2025 |
 | `01_conferencia_e_consolidacao` | Zips de `00_extracao` | Conferências contábeis e consolidação | Relatório de qualidade e base consolidada em parquet |
-| `02_indicadores` | Base consolidada | Cálculo dos indicadores para cada período de cada desenho | Matrizes de indicadores e dicionário |
+| `02_indicadores` | Base consolidada | Cálculo dos indicadores para cada período de cada desenho e das verificações simples | Tabelas dos desenhos, verificações, dicionário e resumo dos indicadores |
 | `03_protocolo` | Decisões de método | Definição das regras e das configurações antes de rodar | Protocolo e arquivo de configurações |
 | `04a` a `04d` | Indicadores e protocolo | 5 modelos e consenso, para cada configuração | Rankings, votos, escores e explicações |
 | `05_avaliacao` | Resultados dos desenhos e registros de controle | Avaliação interna, avaliação externa e comparação | Métricas de cada desenho e escolha do desenho final |
@@ -194,9 +196,19 @@ Regras da Versão 3, todas programadas em `src/indicadores.py`:
 
 O teste de regressão confirmou o código: com as regras da Versão 2 e os dados brutos originais da Versão 2, os 20 indicadores das 45 universidades saem idênticos aos da Versão 2. Com a nova extração, F6, F13, F15 e F20 diferem, porque a extração antiga tinha 826 mil linhas sem movimento, criadas pela métrica de variação cambial, que entravam como meses com valor zero. As regras da Versão 2 continuam disponíveis no código só para esse teste.
 
-As tabelas dos quatro desenhos são montadas por `src/desenhos.py`, e as verificações simples do painel, por `src/verificacoes.py`.
+As tabelas dos quatro desenhos são montadas por `src/desenhos.py`, e as verificações simples do painel, por `src/verificacoes.py`. A verificação de imóveis sem depreciação é um ponto de atenção sobre o cadastro no sistema da SPU, que calcula essa depreciação automaticamente (Portaria Conjunta STN/SPU nº 10/2023); pelo mesmo motivo, a taxa de depreciação de imóveis não é usada como indicador.
 
-Ainda em aberto nesta etapa: gerar o dicionário de indicadores e o notebook da etapa, que grava as tabelas em `02_indicadores`.
+Notebook da etapa: `02_indicadores.ipynb`. Ele repete o teste de regressão contra a Versão 2, monta e grava as tabelas dos desenhos e as verificações e gera o resumo dos indicadores. Leva cerca de 2 minutos.
+
+| Arquivo | Conteúdo | Como é feito |
+| --- | --- | --- |
+| `dicionario_indicadores.xlsx` | Para cada indicador: origem, funcionamento no setor privado, adaptação, cálculo, contas, unidade, comportamento esperado, direção e sinal de alerta e decisões; versões do desenho D; verificações; origem dos indicadores em Freitas (2025) e dos sinais de Martins (2019) | À mão, revisado a cada mudança de regra |
+| `resumo_indicadores.xlsx` | Estatísticas de cada indicador em cada desenho, pares mais correlacionados e alertas das verificações por ano | Pelo notebook (`src/resumo.py`) |
+| `tabelas/desenho_A.parquet` a `desenho_D.parquet` | Todos os registros de cada desenho, com a coluna `motivo_fora` | Pelo notebook |
+| `tabelas/verificacoes.parquet` | As 5 verificações por universidade e ano | Pelo notebook |
+| `tabelas_desenhos.xlsx` | Cópia das tabelas dos desenhos para consulta no Excel | Pelo notebook |
+
+Na prévia feita durante a preparação do notebook, F2 e F20 têm mais de 75% dos registros com o mesmo valor em todos os desenhos, e só um par de indicadores passa de 0,75 de correlação (F1 e F3, no desenho C). A regra definitiva é do protocolo (etapa 3).
 
 ### Etapa 3. Protocolo de experimentos (`03_protocolo`)
 
@@ -275,6 +287,7 @@ Painel em Streamlit com o resultado final. Quando a Versão 3 for incorporada ao
 | `indicadores.py` | Cálculo dos 23 indicadores para qualquer período (`calcular_indicadores`) e por ano, com a variação, para o desenho D (`calcular_indicadores_anuais`) | Pronto |
 | `desenhos.py` | Tabelas dos desenhos A a D, com o motivo de cada registro que fica fora, seleção da rodada (44 ou 39 universidades, testes de sensibilidade) e padronização dentro do período | Pronto |
 | `verificacoes.py` | As 5 verificações simples do painel, por universidade e ano, com o valor envolvido | Pronto |
+| `resumo.py` | Estatísticas dos indicadores por desenho e pares mais correlacionados, gravados em `resumo_indicadores.xlsx` | Pronto |
 | `modelos.py` | 5 modelos e consenso | A fazer |
 | `avaliacao.py` | Frentes de avaliação | A fazer |
 
@@ -286,7 +299,7 @@ Requisitos: Python 3.10 ou superior e as bibliotecas de `requirements.txt`.
 pip install -r requirements.txt
 ```
 
-Cada etapa tem um notebook na própria pasta, que chama as funções de `src` e guarda os resultados ali. Na etapa 1, é o `01_conferencia_e_consolidacao/01_conferencia_e_consolidacao.ipynb`. No VS Code, é preciso escolher o ambiente virtual como kernel do notebook (o VS Code pede para instalar o `ipykernel` na primeira vez).
+Cada etapa tem um notebook na própria pasta, que chama as funções de `src` e guarda os resultados ali. Na etapa 1, é o `01_conferencia_e_consolidacao/01_conferencia_e_consolidacao.ipynb`; na etapa 2, o `02_indicadores/02_indicadores.ipynb`. No VS Code, é preciso escolher o ambiente virtual como kernel do notebook (o VS Code pede para instalar o `ipykernel` na primeira vez).
 
 As mesmas etapas também podem ser rodadas pelo terminal, a partir da pasta raiz do repositório:
 

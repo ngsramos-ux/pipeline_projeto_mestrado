@@ -15,9 +15,12 @@ ser rara, e um modelo de anomalia tende a não apontá-la (D42).
 Verificações:
     V1  Bens móveis sem depreciação: saldo de bens móveis (1.2.3.1.1) no fim do ano e nenhuma VPD de
         depreciação de bens móveis (3.3.3.1.1.01) no ano.
-    V2  Imóveis sem depreciação: saldo de imóveis (1.2.3.2.1, sem terrenos, obras em andamento,
-        estudos e projetos e imóveis a classificar) e nenhuma VPD de depreciação de imóveis
-        (3.3.3.1.1.02) no ano.
+    V2  Imóveis sem depreciação (ponto de atenção sobre o cadastro, D48): saldo de imóveis (1.2.3.2.1,
+        sem terrenos, obras em andamento, estudos e projetos e imóveis a classificar) e nenhuma VPD
+        de depreciação de imóveis (3.3.3.1.1.02) no ano. Essa depreciação é calculada
+        automaticamente pelo sistema da SPU e lançada no SIAFI pela STN (Portaria Conjunta STN/SPU
+        nº 10/2023, art. 11). A ausência pode ser legítima (imóveis cadastrados como terreno, locação
+        de terceiros ou doação, §9º) ou indicar imóvel fora do sistema da SPU (art. 13).
     V3  Bens móveis a classificar: saldo na conta 1.2.3.1.1.99.08 no fim do ano.
     V4  Imóveis a classificar ou a registrar: saldo na conta 1.2.3.2.1.99.05 no fim do ano.
     V5  Nenhuma provisão (ponto de atenção setorial): nenhum saldo em provisões de curto ou de longo
@@ -35,7 +38,7 @@ LIMITE = 1.0  # valores abaixo de R$ 1 são tratados como zero
 
 VERIFICACOES = {
     "V1": ("Bens móveis sem depreciação", "falha"),
-    "V2": ("Imóveis sem depreciação", "falha"),
+    "V2": ("Imóveis sem depreciação", "atenção: cadastro no sistema da SPU"),
     "V3": ("Bens móveis a classificar", "falha"),
     "V4": ("Imóveis a classificar ou a registrar", "falha"),
     "V5": ("Nenhuma provisão", "atenção setorial"),
