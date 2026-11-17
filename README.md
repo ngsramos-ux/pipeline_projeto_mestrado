@@ -18,7 +18,7 @@ O repositório está na **Versão 3**, em desenvolvimento no ramo `versao-3`. O 
 | --- | --- | --- |
 | 0. Extração | `00_extracao` | Concluída: 2016 a 2025 extraídos e guardados em zips anuais |
 | 1. Conferência e consolidação | `01_conferencia_e_consolidacao` | Concluída em 13/11/2026: conferência sem falhas e base consolidada gerada |
-| 2. Indicadores | `02_indicadores` | Em andamento: F1 a F20 programados e validados contra a Versão 2; lista final de indicadores e regras dos desenhos definidas |
+| 2. Indicadores | `02_indicadores` | Em andamento: os 23 indicadores e as regras do desenho D programados; F1 a F20 validados contra a Versão 2 |
 | 3. Protocolo de experimentos | `03_protocolo` | A fazer |
 | 4. Modelagem | `04a` a `04d` | A fazer |
 | 5. Avaliação | `05_avaliacao` | A fazer. O levantamento dos registros de controle pode começar em paralelo |
@@ -182,7 +182,7 @@ Os 20 indicadores das versões anteriores, adaptados de Freitas (2025) e da expe
 | F21 | Liquidez corrente (Martins, 2019) | F22 | Imobilizado sobre ativo (Martins, 2019) |
 | F23 | Taxa de depreciação de bens móveis (Martins, 2019) | | |
 
-Regras definidas para a Versão 3 (F1 a F20 já em `src/indicadores.py`):
+Regras da Versão 3, todas programadas em `src/indicadores.py`:
 
 - F10, F11, F14, F15 e F20 usam o saldo das contas no fim de cada mês, e não o movimento do mês.
 - As séries mensais têm todos os meses do período, com zero nos meses sem movimento.
@@ -194,7 +194,7 @@ Regras definidas para a Versão 3 (F1 a F20 já em `src/indicadores.py`):
 
 O teste de regressão confirmou o código: com as regras da Versão 2 e os dados brutos originais da Versão 2, os 20 indicadores das 45 universidades saem idênticos aos da Versão 2. Com a nova extração, F6, F13, F15 e F20 diferem, porque a extração antiga tinha 826 mil linhas sem movimento, criadas pela métrica de variação cambial, que entravam como meses com valor zero. As regras da Versão 2 continuam disponíveis no código só para esse teste.
 
-Ainda em aberto nesta etapa: programar F21 a F23 e as regras do desenho D, montar as tabelas dos desenhos (`src/desenhos.py`), programar as verificações simples do painel, gerar o dicionário de indicadores e o notebook da etapa.
+Ainda em aberto nesta etapa: montar as tabelas dos desenhos (`src/desenhos.py`), programar as verificações simples do painel (`src/verificacoes.py`), gerar o dicionário de indicadores e o notebook da etapa.
 
 ### Etapa 3. Protocolo de experimentos (`03_protocolo`)
 
@@ -268,8 +268,9 @@ Painel em Streamlit com o resultado final. Quando a Versão 3 for incorporada ao
 | `leitura.py` | Leitura dos arquivos anuais, em CSV ou zip | Pronto |
 | `qualidade.py` | Conferências da etapa 1 | Pronto |
 | `consolidacao.py` | Base consolidada da etapa 1 | Pronto |
-| `indicadores.py` | Cálculo dos indicadores para qualquer período | A fazer |
+| `indicadores.py` | Cálculo dos 23 indicadores para qualquer período (`calcular_indicadores`) e por ano, com a variação, para o desenho D (`calcular_indicadores_anuais`) | Pronto |
 | `desenhos.py` | Montagem das matrizes dos desenhos A a D | A fazer |
+| `verificacoes.py` | Verificações simples do painel | A fazer |
 | `modelos.py` | 5 modelos e consenso | A fazer |
 | `avaliacao.py` | Frentes de avaliação | A fazer |
 
