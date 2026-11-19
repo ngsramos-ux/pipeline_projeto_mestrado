@@ -53,7 +53,7 @@ pipeline_projeto_mestrado/
 ├── README.md
 ├── requirements.txt
 ├── 00_extracao/
-│   ├── sql/                           consulta de extração e diagnósticos
+│   ├── sql/                           consulta de extração e diagnósticos (no 4, também resultados e análise)
 │   └── dados_brutos/                  exportacao_2016.zip ... exportacao_2025.zip
 ├── 01_conferencia_e_consolidacao/
 │   ├── relatorio_qualidade.xlsx
