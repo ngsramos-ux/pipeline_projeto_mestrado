@@ -98,6 +98,8 @@ Cada pasta de etapa terá um notebook curto que chama as funções de `src` e gu
 
 A análise principal cobre **44 universidades**, de **2017 a 2025**, com **2016** como ano base. Cada desenho também roda numa versão só com as **39 universidades** que têm dados em todos os anos.
 
+Pela decisão D51, de 19/11/2026, o universo passará a ter as **69 universidades** da Portaria-TCU nº 105/2026 (68 na análise principal e 63 na versão balanceada), com a inclusão das 24 universidades fundações. Até a nova extração, as regras e contagens abaixo descrevem a base atual.
+
 | Grupo | Universidades | Anos na análise |
 | --- | --- | --- |
 | Antigas | 39 universidades, códigos de 26231 a 26450 | 2017 a 2025 (2016 como base) |
@@ -133,6 +135,7 @@ Diagnósticos feitos antes da extração (consultas em `sql/`):
 | 2 (45 universidades, 2017 a 2025) | 39 universidades com todos os anos; as 6 novas a partir de 2020 |
 | 3A, 3B e 3C (2013 a 2017) | Dados disponíveis a partir de 2016, com a mesma estrutura dos anos seguintes |
 | Extração de 2016 | Igualdade patrimonial fechando nas 39 universidades e totais da UFF iguais aos diagnósticos |
+| 4A e 4B (69 universidades, 2016 a 2025) | As 24 universidades fundações têm todos os anos, com a mesma qualidade das 45, e entram no universo (D51). Detalhes em `sql/diagnostico_4_resultados.md` |
 
 ### Etapa 1. Conferência e consolidação (`01_conferencia_e_consolidacao`)
 
